@@ -1,10 +1,15 @@
-.vscode/**
-.vscode-test/**
-out/test/**
-src/**
 .gitignore
-vsc-extension-quickstart.md
-**/tsconfig.json
-**/tslint.json
+.vscode
+**/*.jl
 **/*.map
 **/*.ts
+node_modules
+pnpm-lock.yaml
+src
+tsconfig.json
+
+!node_modules/@rauschma/stringio
+# !node_modules/child_process
+!node_modules/diff
+!node_modules/untildify
+!node_modules/util
