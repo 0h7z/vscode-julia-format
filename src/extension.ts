@@ -127,12 +127,17 @@ export async function format(path: string, content: string): Promise<diff.Hunk[]
 	try {
 		const tabSize = vscode.workspace.getConfiguration("julia-format").get<number>("tabs") as number
 		const formatter = cp.spawn(julia, args)
+		const spacesToTab = (s: string): string => {
+			const r = RegExp("^(\t*)" + " ".repeat(tabSize), "mg")
+			while (r.test(s)) s = s.replace(r, "$1\t")
+			return s
+		}
 
 		await streamWrite(formatter.stdin, content)
 		await streamEnd(formatter.stdin)
 
 		const formatted = await readableToString(formatter.stdout)
-		const result = tabSize < 1 ? formatted : formatted.replace(new RegExp(" ".repeat(tabSize), "g"), "\t")
+		const result = tabSize > 0 ? spacesToTab(formatted) : formatted
 
 		// TODO: capture stderr output from JuliaFormatter on error
 		await onExit(formatter)
