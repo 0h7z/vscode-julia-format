@@ -14,7 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using JuliaFormatter
-function throw_parse_error(ex, file)
+function throw_parse_error(file, ex)
 	ex.head ≠ :toplevel && return
 	for (i, arg) in pairs(ex.args)
 		(arg isa Expr && arg.head in [:error, :incomplete]) || continue
@@ -24,8 +24,7 @@ function throw_parse_error(ex, file)
 	end
 end
 const text = read(stdin, String)
-const path = replace(strip(strip(raw""" ${path} """), '"'), raw"\\\\" => '/')
-const expr = Meta.parseall(text, filename = basename(path))
-throw_parse_error(expr, occursin(r"^[a-z]:/", path) ? uppercasefirst(path) : path)
+const path = strip(raw" ${path} ")
+throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
 print(format_text(text; ${flag}))
 

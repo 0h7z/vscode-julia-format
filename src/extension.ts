@@ -24,7 +24,7 @@ export async function getJulia(): Promise<string> {
 	// From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L15-L45
 	if (jlpath !== null) {
 		try {
-			await promiseExec(/\s/.test(jlpath) ? `"${jlpath}" --version` : `${jlpath} --version`)
+			await promiseExec(`${jlpath} --version`)
 			return jlpath
 		} catch {
 			vscode.window.showErrorMessage(`
@@ -62,7 +62,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 		args,
 		"-e",
 		`using JuliaFormatter
-		function throw_parse_error(ex, file)
+		function throw_parse_error(file, ex)
 			ex.head ≠ :toplevel && return
 			for (i, arg) in pairs(ex.args)
 				(arg isa Expr && arg.head in [:error, :incomplete]) || continue
@@ -72,9 +72,8 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 			end
 		end
 		const text = read(stdin, String)
-		const path = replace(strip(strip(raw""" ${path} """), '"'), raw"\\\\" => '/')
-		const expr = Meta.parseall(text, filename = basename(path))
-		throw_parse_error(expr, occursin(r"^[a-z]:/", path) ? uppercasefirst(path) : path)
+		const path = strip(raw" ${path} ")
+		throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
 		print(format_text(text; ${flag}))
 		`,
 	]
@@ -120,14 +119,14 @@ export async function alertFormattingError(err: FormatException): Promise<void> 
 // From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L142-L152
 export async function format(path: string, content: string): Promise<diff.Hunk[]> {
 	const julia = await getJulia()
-	const args: string[] = await buildFormatArgs(path)
+	const args: string[] = await buildFormatArgs(vscode.workspace.asRelativePath(path).replace(/\\/g, "/"))
 
 	progressBar.show()
 
 	try {
 		const tabSize = vscode.workspace.getConfiguration("julia-format").get<number>("tabs") as number
 		const formatter = cp.spawn(julia, args)
-		const spacesToTab = (s: string): string => {
+		const spaceToTab = (s: string): string => {
 			const r = RegExp("^(\t*)" + " ".repeat(tabSize), "mg")
 			while (r.test(s)) s = s.replace(r, "$1\t")
 			return s
@@ -137,7 +136,7 @@ export async function format(path: string, content: string): Promise<diff.Hunk[]
 		await streamEnd(formatter.stdin)
 
 		const formatted = await readableToString(formatter.stdout)
-		const result = tabSize > 0 ? spacesToTab(formatted) : formatted
+		const result = tabSize >= 1 ? spaceToTab(formatted) : formatted
 
 		// TODO: capture stderr output from JuliaFormatter on error
 		await onExit(formatter)
