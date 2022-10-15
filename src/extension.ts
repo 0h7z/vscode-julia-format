@@ -59,7 +59,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 	const flag = config.get<string>("flag") as string
 
 	const cmdArgs = [
-		args,
+		...args.split(" ").filter((s) => s !== ""),
 		"-e",
 		`using JuliaFormatter
 		function throw_parse_error(file, ex)
