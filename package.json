@@ -12,7 +12,7 @@
 		"url": "https://github.com/0h7z/vscode-julia-format/issues"
 	},
 	"description": "A formatter for the Julia language",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"engines": {
 		"vscode": "^1.72.0"
 	},
@@ -40,7 +40,7 @@
 				},
 				"julia-format.flag": {
 					"type": "string",
-					"default": "style = DefaultStyle(), indent = 4, margin = 256, always_for_in = true, whitespace_typedefs = true, import_to_using = true, align_struct_field = true, align_assignment = true, align_conditional = true, align_pair_arrow = true, normalize_line_endings = \"unix\", align_matrix = true, indent_submodule = true, surround_whereop_typeparameters = false",
+					"default": "style = DefaultStyle(), indent = 4, margin = 256, always_for_in = true, whitespace_typedefs = true, import_to_using = true, align_struct_field = true, align_assignment = true, align_conditional = true, align_pair_arrow = true, normalize_line_endings = \"unix\", align_matrix = true, join_lines_based_on_source = true, indent_submodule = true, surround_whereop_typeparameters = false",
 					"markdownDescription": "Flag(s) for `JuliaFormatter`. See [Formatting Options](https://domluna.github.io/JuliaFormatter.jl/stable/#Formatting-Options)."
 				},
 				"julia-format.tabs": {
@@ -65,17 +65,17 @@
 	},
 	"devDependencies": {
 		"@types/diff": "^5.0.2",
-		"@types/node": "^18.11.0",
+		"@types/node": "^18.11.9",
 		"@types/vscode": "~1.72.0",
-		"esbuild": "^0.15.11",
-		"typescript": "^4.8.4",
-		"vsce": "^2.11.0"
+		"esbuild": "^0.15.14",
+		"typescript": "^4.9.3",
+		"vsce": "^2.14.0"
 	},
 	"dependencies": {
 		"@rauschma/stringio": "^1.4.0",
 		"child_process": "^1.0.2",
 		"diff": "^5.1.0",
 		"untildify": "^4.0.0",
-		"util": "^0.12.4"
+		"util": "^0.12.5"
 	}
 }
