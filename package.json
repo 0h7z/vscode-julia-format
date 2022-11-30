@@ -12,9 +12,9 @@
 		"url": "https://github.com/0h7z/vscode-julia-format/issues"
 	},
 	"description": "A formatter for the Julia language",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"engines": {
-		"vscode": "^1.72.0"
+		"vscode": "^1.68.0"
 	},
 	"categories": [
 		"Formatters"
@@ -66,8 +66,8 @@
 	"devDependencies": {
 		"@types/diff": "^5.0.2",
 		"@types/node": "^18.11.9",
-		"@types/vscode": "~1.72.0",
-		"esbuild": "^0.15.14",
+		"@types/vscode": "~1.68.1",
+		"esbuild": "^0.15.16",
 		"typescript": "^4.9.3",
 		"vsce": "^2.14.0"
 	},
