@@ -20,7 +20,7 @@ const pd  = "$pkg-v\\1"
 const src = Regex("^$ps\\$ext\$")
 const dst = SubstitutionString("$pd$ext")
 
-for f in readdir()
+for f ∈ readdir()
 	splitext(f)[2] == ext || continue
 	g = replace(f, src => dst)
 	g ≠ f && mv(f, g, force = true)

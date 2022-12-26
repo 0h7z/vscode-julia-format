@@ -57,26 +57,20 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 
 	const args = config.get<string>("args") as string
 	const flag = config.get<string>("flag") as string
-
-	const cmdArgs = [
-		...args.split(" ").filter((s) => s !== ""),
-		"-e",
-		`using JuliaFormatter
-		function throw_parse_error(file, ex)
-			ex.head ≠ :toplevel && return
-			for (i, arg) in pairs(ex.args)
-				(arg isa Expr && arg.head in [:error, :incomplete]) || continue
-				line = ex.args[i-1].line
-				info = replace(join(arg.args, ", "), '"' => '\`')
-				throw(Meta.ParseError("$file:$line: $info"))
-			end
+	const expr = `using JuliaFormatter
+	const throw_parse_error(file, x) =
+		x.head == :toplevel && for (i, ex) ∈ pairs(x.args)
+			ex isa Expr && ex.head ∈ (:error, :incomplete) || continue
+			line, info = x.args[i-1].line, replace(join(ex.args, ", "), '"' => '\`')
+			throw(Meta.ParseError("$file:$line: $info"))
 		end
-		const text = read(stdin, String)
-		const path = strip(raw" ${path} ")
-		throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
-		print(format_text(text; ${flag}))
-		`,
-	]
+	const text = read(stdin, String)
+	const path = strip(raw" ${path} ")
+	throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
+	print(format_text(text; ${flag}))
+	`.replace(/\t/g, "")
+
+	const cmdArgs = [...args.split(/(?<!\\) /).filter((s) => s !== ""), "-e", expr]
 
 	outputChannel.appendLine(`Running Julia with args: ${JSON.stringify(cmdArgs)}`)
 
