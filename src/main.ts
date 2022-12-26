@@ -1,22 +1,21 @@
-import * as vscode from "vscode"
-import * as util from "util"
-import * as cp from "child_process"
-import * as diff from "diff"
-import untildify = require("untildify")
-import { streamWrite, streamEnd, readableToString } from "@rauschma/stringio"
+import { createPatch, Hunk, ParsedDiff, parsePatch } from "diff"
 import { onExit } from "./onexit"
+import { readableToString, streamEnd, streamWrite } from "@rauschma/stringio"
+import cp from "child_process"
+import untildify from "untildify"
+import util from "util"
+import vscode from "vscode"
 
 export const promiseExec = util.promisify(cp.exec)
 export let registration: vscode.Disposable | undefined
 
-const progressBar: vscode.StatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -1)
+const vscodeOutput = vscode.window.createOutputChannel("Julia Formatter")
+const progressBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -1)
 progressBar.text = "Formatting..."
-
-let outputChannel = vscode.window.createOutputChannel("Julia Formatter")
 
 export async function getJulia(): Promise<string> {
 	// From https://github.com/julia-vscode/julia-vscode/blob/dd94db5/src/settings.ts#L8-L14
-	let section = vscode.workspace.getConfiguration("julia")
+	const section = vscode.workspace.getConfiguration("julia")
 	let jlpath = section ? untildify(section.get<string>("executablePath", "julia")) : null
 	if (jlpath === "") {
 		jlpath = null
@@ -27,10 +26,7 @@ export async function getJulia(): Promise<string> {
 			await promiseExec(`${jlpath} --version`)
 			return jlpath
 		} catch {
-			vscode.window.showErrorMessage(`
-			The Julia path set in the "julia.executablePath" setting is invalid. Check
-			the value or clear the setting to use the global Julia installation.
-			`)
+			vscode.window.showErrorMessage(`The Julia path set in the "julia.executablePath" setting is invalid. Check the value or clear the setting to use the global Julia installation.`)
 		}
 	}
 	try {
@@ -41,11 +37,7 @@ export async function getJulia(): Promise<string> {
 			await promiseExec("jl --version")
 			return "jl"
 		} catch {
-			vscode.window.showErrorMessage(`
-			Julia is either not installed or not properly configured. Check that
-			the Julia location is set in VSCode or provided in the system
-			environment variables.
-			`)
+			vscode.window.showErrorMessage(`Julia is either not installed or not properly configured. Check that the Julia location is set in VSCode or provided in the system environment variables.`)
 			throw err
 		}
 	}
@@ -59,11 +51,11 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 	const flag = config.get<string>("flag") as string
 	const expr = `using JuliaFormatter
 	const throw_parse_error(file, x) =
-		x.head == :toplevel && for (i, ex) ∈ pairs(x.args)
-			ex isa Expr && ex.head ∈ (:error, :incomplete) || continue
-			line, info = x.args[i-1].line, replace(join(ex.args, ", "), '"' => '\`')
-			throw(Meta.ParseError("$file:$line: $info"))
-		end
+	x.head == :toplevel && for (i, ex) ∈ pairs(x.args)
+	ex isa Expr && ex.head ∈ (:error, :incomplete) || continue
+	line, info = x.args[i-1].line, replace(join(ex.args, ", "), '"' => '\`')
+	throw(Meta.ParseError("$file:$line: $info"))
+	end
 	const text = read(stdin, String)
 	const path = strip(raw" ${path} ")
 	throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
@@ -72,7 +64,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 
 	const cmdArgs = [...args.split(/(?<!\\) /).filter((s) => s !== ""), "-e", expr]
 
-	outputChannel.appendLine(`Running Julia with args: ${JSON.stringify(cmdArgs)}`)
+	vscodeOutput.appendLine(`Running Julia with args: ${JSON.stringify(cmdArgs)}`)
 
 	return cmdArgs
 }
@@ -83,18 +75,14 @@ export async function installFormatter(): Promise<void> {
 	try {
 		await promiseExec(`${julia} -e "using Pkg; Pkg.update(); Pkg.add(\\"JuliaFormatter\\")"`)
 	} catch (err) {
-		vscode.window.showErrorMessage(`
-		Could not install JuliaFormatter automatically. Make sure that it
-		is installed correctly and try manually installing with
-		\` julia -e "using Pkg; Pkg.add(string(:JuliaFormatter))" \`.\n\nFull error: ${err}.
-		`)
+		vscode.window.showErrorMessage(`Could not install JuliaFormatter automatically. Make sure that it is installed correctly and try manually installing with \` julia -e "using Pkg; Pkg.add(string(:JuliaFormatter))" \`.\n\nFull error: ${err}.`)
 		throw err
 	}
 }
 
 // From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L101-L132
 export async function alertFormattingError(err: FormatException): Promise<void> {
-	outputChannel.appendLine(err.message)
+	vscodeOutput.appendLine(err.message)
 
 	if (err.message.includes("Package JuliaFormatter not found")) {
 		const installButton = "Install Module"
@@ -111,7 +99,7 @@ export async function alertFormattingError(err: FormatException): Promise<void> 
 }
 
 // From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L142-L152
-export async function format(path: string, content: string): Promise<diff.Hunk[]> {
+export async function format(path: string, content: string): Promise<Hunk[]> {
 	const julia = await getJulia()
 	const args: string[] = await buildFormatArgs(vscode.workspace.asRelativePath(path).replace(/\\/g, "/"))
 
@@ -121,7 +109,7 @@ export async function format(path: string, content: string): Promise<diff.Hunk[]
 		const tabSize = vscode.workspace.getConfiguration("julia-format").get<number>("tabs") as number
 		const formatter = cp.spawn(julia, args)
 		const spaceToTab = (s: string): string => {
-			const r = RegExp("^(\t*)" + " ".repeat(tabSize), "mg")
+			const r = RegExp(`^(\t*)${" ".repeat(tabSize)}(?!⋮$)`, "mg")
 			while (r.test(s)) s = s.replace(r, "$1\t")
 			return s
 		}
@@ -136,8 +124,8 @@ export async function format(path: string, content: string): Promise<diff.Hunk[]
 		await onExit(formatter)
 
 		// It would be nicer if we could combine these two lines somehow
-		const patch = diff.createPatch(path, content, result)
-		const parsed: diff.ParsedDiff[] = diff.parsePatch(patch)
+		const patch = createPatch(path, content, result)
+		const parsed: ParsedDiff[] = parsePatch(patch)
 		return parsed[0].hunks
 	} catch (e) {
 		const err = <FormatException>e
@@ -149,7 +137,7 @@ export async function format(path: string, content: string): Promise<diff.Hunk[]
 }
 
 // From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L159-L180
-export function hunksToEdits(hunks: diff.Hunk[]): vscode.TextEdit[] {
+export function hunksToEdits(hunks: Hunk[]): vscode.TextEdit[] {
 	return hunks.map((hunk): vscode.TextEdit => {
 		const startPos = new vscode.Position(hunk.oldStart - 1, 0)
 		const endPos = new vscode.Position(hunk.oldStart - 1 + hunk.oldLines, 0)
@@ -167,14 +155,14 @@ export function hunksToEdits(hunks: diff.Hunk[]): vscode.TextEdit[] {
 	})
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate() {
 	vscode.languages.registerDocumentFormattingEditProvider("julia", {
 		async provideDocumentFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
 			const hunks = await format(document.fileName, document.getText())
 			return hunksToEdits(hunks)
 		},
 	})
-	outputChannel.appendLine("Initialized Julia Formatter extension")
+	vscodeOutput.appendLine("Initialized Julia Formatter extension")
 }
 
 export interface FormatException {

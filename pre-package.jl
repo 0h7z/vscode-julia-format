@@ -13,16 +13,5 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-const pkg = "vscode-julia-format"
-const ext = ".vsix"
-const ps  = "$pkg-(\\d+\\.\\d+\\.\\d+)"
-const pd  = "$pkg-v\\1"
-const src = Regex("^$ps\\$ext\$")
-const dst = SubstitutionString("$pd$ext")
-
-for f ∈ readdir()
-	splitext(f)[2] == ext || continue
-	g = replace(f, src => dst)
-	g ≠ f && mv(f, g, force = true)
-end
+((d, f) -> isfile(d * f) ? cp(d * f, f) : error())("out/", "main.js")
 

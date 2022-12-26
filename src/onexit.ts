@@ -1,23 +1,23 @@
-import { streamWrite, streamEnd, readableToString } from "@rauschma/stringio"
-import * as cp from "child_process"
+import { ChildProcess } from "child_process"
+import { readableToString } from "@rauschma/stringio"
 
-export async function onExit(childProcess: cp.ChildProcess) {
+export async function onExit(cp: ChildProcess) {
 	return new Promise(async (resolve, reject) => {
-		childProcess.once("exit", async (code, signal) => {
+		cp.once("exit", async (code, _) => {
 			if (code === 0) resolve(undefined)
-			else if (childProcess.stderr === null) {
-				reject(new Error("Exit with error code: " + code))
+			else if (cp.stderr !== null) {
+				const errorOutput = await readableToString(cp.stderr)
+				reject(new Error(`Exit with error code: ${code}\n` + errorOutput))
 			} else {
-				const errorOutput = await readableToString(childProcess.stderr)
-				reject(new Error("Exit with error code: " + code + "\n" + errorOutput))
+				reject(new Error(`Exit with error code: ${code}`))
 			}
 		})
-		childProcess.once("error", async (err) => {
-			if (childProcess.stderr === null) {
-				reject(err)
+		cp.once("error", async (err) => {
+			if (cp.stderr !== null) {
+				const errorOutput = await readableToString(cp.stderr)
+				reject(`${err.name}: ${err.message}\n` + errorOutput)
 			} else {
-				const errorOutput = await readableToString(childProcess.stderr)
-				reject(`${err.name}: ${err.message} \n` + errorOutput)
+				reject(err)
 			}
 		})
 	})
