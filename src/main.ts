@@ -49,6 +49,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 
 	const args = config.get<string>("args") as string
 	const flag = config.get<string>("flag") as string
+	const inop = config.get<string>("inop") as string
 	const expr = `using JuliaFormatter
 	const throw_parse_error(file, x) =
 	x.head == :toplevel && for (i, ex) ∈ pairs(x.args)
@@ -59,14 +60,20 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 	const text = read(stdin, String)
 	const path = strip(raw" ${path} ")
 	throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
-	print(format_text(text; ${flag}))
-	`.replace(/\t/g, "")
+	print(format_text(text; ${flag}))\n`.replace(/\t/g, "")
 
-	const cmdArgs = [...args.split(/(?<!\\) /).filter((s) => s !== ""), "-e", expr]
+	const for_in_op = inop.trim().replace(/ +/g, " ")
+	const args_list = [
+		...args.split(/(?<!\\) /).filter((s) => s !== ""),
+		"-e",
+		for_in_op !== ""
+			? `import JuliaFormatter.valid_for_in_op; valid_for_in_op(s::String) = s ∈ split(raw"${for_in_op}", ' ')`
+			+ `\n` + expr : expr, // prettier-ignore
+	]
 
-	vscodeOutput.appendLine(`Running Julia with args: ${JSON.stringify(cmdArgs)}`)
+	vscodeOutput.appendLine(`Running Julia with args: ${JSON.stringify(args_list)}`)
 
-	return cmdArgs
+	return args_list
 }
 
 // From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L78-L90
