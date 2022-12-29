@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Heptazhou <zhou@0h7z.com>
+# Copyright (C) 2022-2023 Heptazhou <zhou@0h7z.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -14,4 +14,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ((d, f) -> isfile(d * f) ? cp(d * f, f) : error())("out/", "main.js")
+
+const dir = "node_modules/"
+const ext = ".md"
+const mod = ["@rauschma/stringio", "diff", "untildify", "util"]
+
+for (prefix, ds, fs) ∈ walkdir(dir)
+	prefix = replace(prefix, "\\" => "/")
+	!any(startswith.(prefix, dir .* mod)) || cd(prefix) do
+		for f ∈ fs
+			splitext(f)[2] == ext && rm(f)
+		end
+	end
+end
 
