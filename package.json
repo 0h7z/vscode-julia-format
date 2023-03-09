@@ -3,7 +3,7 @@
 	"displayName": "Julia Formatter",
 	"publisher": "0h7z",
 	"icon": "icon.ico",
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"license": "AGPL-3.0-or-later",
 	"description": "A formatter for the Julia language",
 	"repository": {
@@ -37,19 +37,19 @@
 				},
 				"julia-format.flag": {
 					"type": "string",
-					"default": "style = DefaultStyle(), indent = 4, margin = 256, always_for_in = true, for_in_replacement = \"∈\", whitespace_typedefs = true, import_to_using = true, align_struct_field = true, align_assignment = true, align_conditional = true, align_pair_arrow = true, normalize_line_endings = \"unix\", align_matrix = true, join_lines_based_on_source = true, indent_submodule = true, surround_whereop_typeparameters = false",
+					"default": "style=DefaultStyle(), indent=4, margin=256, always_for_in=true, for_in_replacement=\"∈\", whitespace_typedefs=true, import_to_using=true, align_struct_field=true, align_assignment=true, align_conditional=true, align_pair_arrow=true, normalize_line_endings=\"unix\", align_matrix=true, join_lines_based_on_source=true, indent_submodule=true, surround_whereop_typeparameters=false",
 					"markdownDescription": "Flag(s) for `JuliaFormatter`. See [Formatting Options](https://domluna.github.io/JuliaFormatter.jl/stable/#Formatting-Options)."
 				},
 				"julia-format.inop": {
 					"type": "string",
 					"default": "= ∈",
-					"markdownDescription": "Choose `in`-like operator(s) for doing `for_in_replacement`, seperated by space. Or, set this to empty string to do nothing."
+					"markdownDescription": "The `in`-like operator(s) for doing `for_in_replacement`, seperated by space. Or, set this to empty string to use the default rule of `JuliaFormatter`."
 				},
 				"julia-format.tabs": {
 					"type": "number",
 					"default": 4,
 					"minimum": 0,
-					"markdownDescription": "Tab size, should be the same as `indent`'s value in `#julia-format.flag#`. Otherwise, set this to 0 to use space(s)."
+					"markdownDescription": "Tab size, which should be the same as `indent`'s value in `#julia-format.flag#`. Or, set this to 0 to use space(s)."
 				}
 			}
 		}
@@ -73,12 +73,12 @@
 		"util": "^0.12.5"
 	},
 	"devDependencies": {
-		"@types/diff": "^5.0.2",
-		"@types/node": "^18.13.0",
+		"@types/diff": "^5.0.3",
+		"@types/node": "^18.15.11",
 		"@types/vscode": "~1.69.1",
-		"@vscode/vsce": "^2.17.0",
-		"esbuild": "^0.17.8",
-		"typescript": "^4.9.5"
+		"@vscode/vsce": "^2.18.0",
+		"esbuild": "^0.17.15",
+		"typescript": "^5.0.3"
 	},
 	"engines": {
 		"vscode": "^1.69.0"

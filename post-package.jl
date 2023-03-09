@@ -17,10 +17,10 @@
 
 const pkg = "vscode-julia-format"
 const ext = ".vsix"
-const ps  = "$pkg-(\\d+\\.\\d+\\.\\d+)"
-const pd  = "$pkg-v\\1"
-const src = Regex("^$ps\\$ext\$")
-const dst = SubstitutionString("$pd$ext")
+const ps  = "$pkg-" * raw"(\d+\.\d+\.\d+)"
+const pd  = "$pkg-" * raw"v\1"
+const src = Regex('^' * ps * escape_string(ext, '.') * '$')
+const dst = SubstitutionString(pd * ext)
 
 for f ∈ readdir()
 	splitext(f)[2] == ext || continue

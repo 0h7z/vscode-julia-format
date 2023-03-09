@@ -115,13 +115,18 @@ export async function format(path: string, content: string): Promise<Hunk[]> {
 	try {
 		const tabSize = vscode.workspace.getConfiguration("julia-format").get<number>("tabs") as number
 		const formatter = cp.spawn(julia, args)
+		const tabToSpace = (s: string): string => {
+			const r = RegExp("^(\t*)\t(?!⋮$)", "mg")
+			while (r.test(s)) s = s.replace(r, `$1${" ".repeat(tabSize)}`)
+			return s
+		}
 		const spaceToTab = (s: string): string => {
 			const r = RegExp(`^(\t*)${" ".repeat(tabSize)}(?!⋮$)`, "mg")
 			while (r.test(s)) s = s.replace(r, "$1\t")
 			return s
 		}
 
-		await streamWrite(formatter.stdin, content)
+		await streamWrite(formatter.stdin, tabToSpace(content))
 		await streamEnd(formatter.stdin)
 
 		const formatted = await readableToString(formatter.stdout)
@@ -154,7 +159,7 @@ export function hunksToEdits(hunks: Hunk[]): vscode.TextEdit[] {
 		hunk.lines.forEach((line, i) => {
 			const firstChar = line.charAt(0)
 			// hunk.linedelimiters[i] should always exist, but you never know
-			if (firstChar === " " || firstChar === "+") newTextFragments.push(line.substr(1), hunk.linedelimiters[i] ?? "\n")
+			if (firstChar === " " || firstChar === "+") newTextFragments.push(line.substring(1), hunk.linedelimiters![i] ?? "\n")
 		})
 		const newText = newTextFragments.join("")
 
