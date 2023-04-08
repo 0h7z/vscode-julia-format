@@ -80,7 +80,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 export async function installFormatter(): Promise<void> {
 	const julia = await getJulia()
 	try {
-		await promiseExec(`${julia} -e "using Pkg; Pkg.update(); Pkg.add(\\"JuliaFormatter\\")"`)
+		await promiseExec(`${julia} -e "using Pkg; Pkg.Registry.update(); Pkg.add(\\"JuliaFormatter\\")"`)
 	} catch (err) {
 		vscode.window.showErrorMessage(`Could not install JuliaFormatter automatically. Make sure that it is installed correctly and try manually installing with \` julia -e "using Pkg; Pkg.add(string(:JuliaFormatter))" \`.\n\nFull error: ${err}.`)
 		throw err

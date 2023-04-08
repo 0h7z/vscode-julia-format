@@ -22,8 +22,7 @@ const pd  = "$pkg-" * raw"v\1"
 const src = Regex('^' * ps * escape_string(ext, '.') * '$')
 const dst = SubstitutionString(pd * ext)
 
-for f ∈ readdir()
-	splitext(f)[2] == ext || continue
+for f ∈ filter!(endswith(ext), readdir())
 	g = replace(f, src => dst)
 	g ≠ f && mv(f, g, force = true)
 end
