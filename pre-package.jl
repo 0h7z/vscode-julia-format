@@ -19,10 +19,10 @@ const dir = "node_modules/"
 const ext = r"\.(es6\.js|map|md)"
 const mod = ["@rauschma/stringio", "diff", "untildify", "util"]
 
-for (prefix, ds, fs) ∈ walkdir(dir)
-	prefix = replace(prefix, "\\" => "/")
-	!any(startswith.(prefix, dir .* mod)) && continue
-	cd(prefix) do
+for (prefix, ds, fs) ∈ walkdir(dir, topdown = false)
+	(prefix) = replace(prefix, "\\" => "/")
+	any(startswith.(prefix, dir .* mod)) && cd(prefix) do
+		rm.(("test",), force = true, recursive = true)
 		rm.(filter!(endswith(ext), fs))
 	end
 end

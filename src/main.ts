@@ -1,10 +1,12 @@
-import { createPatch, Hunk, ParsedDiff, parsePatch } from "diff"
+import { Hunk, ParsedDiff, createPatch, parsePatch } from "diff"
 import { onExit } from "./onexit"
 import { readableToString, streamEnd, streamWrite } from "@rauschma/stringio"
 import cp from "child_process"
-import untildify from "untildify"
 import util from "util"
 import vscode from "vscode"
+
+// @ts-expect-error
+import untildify from "untildify"
 
 export const promiseExec = util.promisify(cp.exec)
 export let registration: vscode.Disposable | undefined
@@ -182,7 +184,7 @@ export interface FormatException {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate(): void {
+export function deactivate() {
 	if (registration) {
 		registration.dispose()
 	}
