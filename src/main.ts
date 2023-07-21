@@ -84,7 +84,7 @@ export async function installFormatter(): Promise<void> {
 	try {
 		await promiseExec(`${julia} -e "using Pkg; Pkg.Registry.update(); Pkg.add(\\"JuliaFormatter\\")"`)
 	} catch (err) {
-		vscode.window.showErrorMessage(`Could not install JuliaFormatter automatically. Make sure that it is installed correctly and try manually installing with \` julia -e "using Pkg; Pkg.add(string(:JuliaFormatter))" \`.\n\nFull error: ${err}.`)
+		vscode.window.showErrorMessage(`Could not install JuliaFormatter automatically. Try manually installing with \` julia -e "using Pkg; Pkg.add(string(:JuliaFormatter))" \`.\n\nFull error: ${err}.`)
 		throw err
 	}
 }
@@ -177,6 +177,7 @@ export function activate() {
 		},
 	})
 	vscodeOutput.appendLine("Initialized Julia Formatter extension")
+	format("", "")
 }
 
 export interface FormatException {
