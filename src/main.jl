@@ -13,11 +13,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# import JuliaFormatter.valid_for_in_op; valid_for_in_op(s::String) = s ∈ split(raw"${for_in_op}", ' ')
-import JuliaFormatter.valid_for_in_op
-valid_for_in_op(s::String) = s ∈ split(raw"${for_in_op}", ' ')
-
 using JuliaFormatter
+JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw"${for_in_op}", ' ')
+
 const throw_parse_error(file, x) =
 	x.head == :toplevel && for (i, ex) ∈ pairs(x.args)
 		ex isa Expr && ex.head ∈ (:error, :incomplete) || continue

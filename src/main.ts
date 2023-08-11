@@ -52,7 +52,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 	const args = config.get<string>("args") as string
 	const flag = config.get<string>("flag") as string
 	const inop = config.get<string>("inop") as string
-	const expr = `using JuliaFormatter
+	const expr = `
 	const throw_parse_error(file, x) =
 	x.head == :toplevel && for (i, ex) ∈ pairs(x.args)
 	ex isa Expr && ex.head ∈ (:error, :incomplete) || continue
@@ -68,9 +68,10 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 	const args_list = [
 		...args.split(/(?<!\\) /).filter((s) => s !== ""),
 		"-e",
-		for_in_op !== ""
-			? `import JuliaFormatter.valid_for_in_op; valid_for_in_op(s::String) = s ∈ split(raw"${for_in_op}", ' ')`
-			+ `\n` + expr : expr, // prettier-ignore
+		`using JuliaFormatter` +
+		( for_in_op === "" ? "" : "\n" +
+		`JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw"${for_in_op}", ' ')` )
+		+ expr, // prettier-ignore
 	]
 
 	vscodeOutput.appendLine(`Running Julia with args: ${JSON.stringify(args_list)}`)
@@ -170,7 +171,7 @@ export function hunksToEdits(hunks: Hunk[]): vscode.TextEdit[] {
 }
 
 export function activate() {
-	vscode.languages.registerDocumentFormattingEditProvider("julia", {
+	registration = vscode.languages.registerDocumentFormattingEditProvider("julia", {
 		async provideDocumentFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
 			const hunks = await format(document.fileName, document.getText())
 			return hunksToEdits(hunks)

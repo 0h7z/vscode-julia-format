@@ -16,14 +16,14 @@
 ((d, f) -> isfile(d * f) ? cp(d * f, f, force = true) : error())("out/", "main.js")
 
 const dir = "node_modules/"
-const ext = r"\.(es6\.js|map|md)"
 const mod = ["@rauschma/stringio", "diff", "untildify", "util"]
+const rex = r"\.(d\.ts|es6\.js|map|md)$|^(runtime\.js|tsconfig\.json)$"
 
 for (prefix, ds, fs) ∈ walkdir(dir, topdown = false)
 	(prefix) = replace(prefix, "\\" => "/")
 	any(startswith.(prefix, dir .* mod)) && cd(prefix) do
 		rm.(("test",), force = true, recursive = true)
-		rm.(filter!(endswith(ext), fs))
+		rm.(filter!(contains(rex), fs))
 	end
 end
 

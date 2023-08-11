@@ -3,7 +3,7 @@
 	"displayName": "Julia Formatter",
 	"publisher": "0h7z",
 	"icon": "icon.ico",
-	"version": "1.1.5",
+	"version": "1.2.0",
 	"license": "AGPL-3.0-or-later",
 	"description": "A formatter for the Julia language",
 	"repository": {
@@ -32,13 +32,13 @@
 			"properties": {
 				"julia-format.args": {
 					"type": "string",
-					"default": "--startup-file=no --compile=min",
+					"default": "--threads=auto --startup-file=no --compile=min",
 					"markdownDescription": "Command line argument(s) for Julia. See [Command-line switches for Julia](https://docs.julialang.org/en/v1/manual/command-line-interface/#command-line-interface)."
 				},
 				"julia-format.flag": {
 					"type": "string",
-					"default": "style=DefaultStyle(), indent=4, margin=256, always_for_in=true, for_in_replacement=\"∈\", whitespace_typedefs=true, import_to_using=true, align_struct_field=true, align_assignment=true, align_conditional=true, align_pair_arrow=true, normalize_line_endings=\"unix\", align_matrix=true, join_lines_based_on_source=true, indent_submodule=true, surround_whereop_typeparameters=false",
-					"markdownDescription": "Flag(s) for `JuliaFormatter`. See [Formatting Options](https://domluna.github.io/JuliaFormatter.jl/stable/#Formatting-Options)."
+					"default": "style=DefaultStyle(), indent=4, margin=256, always_for_in=true, for_in_replacement=\"∈\", whitespace_typedefs=true, import_to_using=true, whitespace_in_kwargs=true, align_struct_field=true, align_assignment=true, align_conditional=true, align_pair_arrow=true, normalize_line_endings=\"unix\", align_matrix=true, join_lines_based_on_source=true, indent_submodule=true, surround_whereop_typeparameters=false, yas_style_nesting=true",
+					"markdownDescription": "Flag(s) for `JuliaFormatter`. See [Formatting Options](https://domluna.github.io/JuliaFormatter.jl/stable/#Formatting-Options) and [options.jl](https://github.com/domluna/JuliaFormatter.jl/blob/master/src/options.jl)."
 				},
 				"julia-format.inop": {
 					"type": "string",
@@ -56,7 +56,8 @@
 	},
 	"scripts": {
 		"npm": "npm i && npm ci && npm up",
-		"all": "pnpm compile && pnpm build && pnpm package",
+		"all": "npm ci && pnpm compile && pnpm build && pnpm package",
+		"upd": "pnpm up --latest && pnpm add -D @types/vscode@1.69 && pnpm npm",
 		"package": "julia pre-package.jl && vsce package && julia post-package.jl",
 		"build": "pnpm esbuild --minify",
 		"compile": "tsc -p ./",
@@ -74,11 +75,11 @@
 	},
 	"devDependencies": {
 		"@types/diff": "^5.0.3",
-		"@types/node": "^20.4.9",
+		"@types/node": "^20.5.8",
 		"@types/vscode": "~1.69.1",
-		"@vscode/vsce": "^2.20.1",
-		"esbuild": "^0.19.0",
-		"typescript": "^5.1.6"
+		"@vscode/vsce": "^2.21.0",
+		"esbuild": "^0.19.2",
+		"typescript": "^5.2.2"
 	},
 	"engines": {
 		"vscode": "^1.69.0"
