@@ -11,6 +11,7 @@ import untildify from "untildify"
 export const promiseExec = util.promisify(cp.exec)
 export let registration: vscode.Disposable | undefined
 
+let installingJlFmt = false
 const vscodeOutput = vscode.window.createOutputChannel("Julia Formatter")
 const progressBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -1)
 progressBar.text = "Formatting..."
@@ -83,25 +84,40 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 export async function installFormatter(): Promise<void> {
 	const julia = await getJulia()
 	try {
-		await promiseExec(`${julia} -e "using Pkg; Pkg.Registry.update(); Pkg.add(\\"JuliaFormatter\\")"`)
+		await promiseExec(`${julia} -e "using Pkg; Pkg.Registry.update(); Pkg.add(\\"JuliaFormatter\\"); Pkg.update(\\"JuliaFormatter\\")"`)
 	} catch (err) {
-		vscode.window.showErrorMessage(`Could not install JuliaFormatter automatically. Try manually installing with \` julia -e "using Pkg; Pkg.add(string(:JuliaFormatter))" \`.\n\nFull error: ${err}.`)
+		vscode.window.showErrorMessage(`Could not install JuliaFormatter automatically. Try manually installing with \` julia -e "using Pkg; Pkg.update(); Pkg.add(string(:JuliaFormatter))" \`.\n\nFull error: ${err}.`)
 		throw err
 	}
 }
 
 // From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L101-L132
-export async function alertFormattingError(err: FormatException): Promise<void> {
-	vscodeOutput.appendLine(err.message)
+export async function alertFormattingError(error: FormatException): Promise<void> {
+	const err = error.message
+	vscodeOutput.appendLine(err)
 
-	if (err.message.includes("Package JuliaFormatter not found")) {
+	if (
+		err.includes("ERROR: ArgumentError: Package JuliaFormatter not found") ||
+		err.includes("ERROR: MethodError: no method matching JuliaFormatter.Options") ||
+		err.includes("ERROR: UndefVarError: `valid_for_in_op` not defined") //
+	) {
 		const installButton = "Install Module"
-		const response = await vscode.window.showErrorMessage(`The Julia package "JuliaFormatter" must be installed to format files.`, installButton)
-		if (response === installButton) installFormatter()
+		const response = await vscode.window.showErrorMessage(`The Julia package "JuliaFormatter" must be installed to format code. Installation will take some time.`, installButton)
+		if (response !== installButton) return
+		let progress = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -1)
+		try {
+			installingJlFmt = true
+			progress.text = "Installing JuliaFormatter..."
+			progress.show()
+			await installFormatter()
+		} finally {
+			installingJlFmt = false
+			progress.dispose()
+		}
 	} else {
 		const bugReportButton = "Submit Bug Report"
-		const err_header_match = err.message.match(/^(ERROR:.*)/m)
-		const err_body = err_header_match !== null ? err_header_match[1] : `Unknown Error: Could not format file. Full error:\n\n${err.message}`
+		const err_header_match = err.match(/^(ERROR:.*)/m)
+		const err_body = err_header_match !== null ? err_header_match[1] : `Unknown Error: Could not format code. Full error:\n\n${err}`
 
 		const response = await vscode.window.showErrorMessage(err_body, bugReportButton)
 		if (response === bugReportButton) vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://github.com/0h7z/vscode-julia-format/issues/new"))
@@ -144,7 +160,7 @@ export async function format(path: string, content: string): Promise<Hunk[]> {
 		return parsed[0].hunks
 	} catch (e) {
 		const err = <FormatException>e
-		alertFormattingError(err)
+		if (!installingJlFmt) alertFormattingError(err)
 		throw err
 	} finally {
 		progressBar.hide()
