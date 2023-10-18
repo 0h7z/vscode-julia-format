@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-((d, f) -> isfile(d * f) ? cp(d * f, f, force = true) : error())("out/", "main.js")
+((d, f) -> write(f, replace(read(d * f, String), "\t" => "")))("out/", "main.js")
 
 const dir = "node_modules/"
 const mod = ["@rauschma/stringio", "diff", "untildify", "util"]

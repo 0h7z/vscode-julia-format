@@ -63,7 +63,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 	const text = read(stdin, String)
 	const path = strip(raw" ${path} ")
 	throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
-	print(format_text(text; ${flag}))\n`.replace(/\t/g, "")
+	print(format_text(text; ${flag}))\n`
 
 	const for_in_op = inop.trim().replace(/ +/g, " ")
 	const args_list = [

@@ -3,7 +3,7 @@
 	"displayName": "Julia Formatter",
 	"publisher": "0h7z",
 	"icon": "icon.ico",
-	"version": "1.2.2",
+	"version": "1.2.3",
 	"license": "AGPL-3.0-or-later",
 	"description": "A formatter for the Julia language",
 	"repository": {
@@ -74,11 +74,11 @@
 		"util": "^0.12.5"
 	},
 	"devDependencies": {
-		"@types/diff": "^5.0.6",
-		"@types/node": "^20.8.6",
+		"@types/diff": "^5.0.8",
+		"@types/node": "^20.9.1",
 		"@types/vscode": "~1.69.1",
-		"@vscode/vsce": "^2.21.1",
-		"esbuild": "^0.19.4",
+		"@vscode/vsce": "^2.22.0",
+		"esbuild": "^0.19.5",
 		"typescript": "^5.2.2"
 	},
 	"engines": {
