@@ -3,7 +3,7 @@
 	"displayName": "Julia Formatter",
 	"publisher": "0h7z",
 	"icon": "icon.ico",
-	"version": "1.2.3",
+	"version": "1.2.4",
 	"license": "AGPL-3.0-or-later",
 	"description": "A formatter for the Julia language",
 	"repository": {
