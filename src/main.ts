@@ -1,14 +1,14 @@
-import { Hunk, ParsedDiff, createPatch, parsePatch } from "diff"
+import { exec, spawn } from "child_process"
+import { Hunk, structuredPatch } from "diff"
 import { onExit } from "./onexit"
+import { promisify } from "util"
 import { readableToString, streamEnd, streamWrite } from "@rauschma/stringio"
-import cp from "child_process"
-import util from "util"
 import vscode from "vscode"
 
 // @ts-expect-error
 import untildify from "untildify"
 
-export const promiseExec = util.promisify(cp.exec)
+export const promiseExec = promisify(exec)
 export let registration: vscode.Disposable | undefined
 
 let installingJlFmt = false
@@ -17,13 +17,13 @@ const progressBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.
 progressBar.text = "Formatting..."
 
 export async function getJulia(): Promise<string> {
-	// From https://github.com/julia-vscode/julia-vscode/blob/dd94db5/src/settings.ts#L8-L14
+	// https://github.com/julia-vscode/julia-vscode/blob/dd94db5/src/settings.ts#L8-L14
 	const section = vscode.workspace.getConfiguration("julia")
 	let jlpath = section ? untildify(section.get<string>("executablePath", "julia")) : null
 	if (jlpath === "") {
 		jlpath = null
 	}
-	// From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L15-L45
+	// https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L15-L45
 	if (jlpath !== null) {
 		try {
 			await promiseExec(`${jlpath} --version`)
@@ -46,24 +46,28 @@ export async function getJulia(): Promise<string> {
 	}
 }
 
-// From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L54-L72
+// https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L54-L72
 export async function buildFormatArgs(path: string): Promise<string[]> {
 	const config = vscode.workspace.getConfiguration("julia-format")
 
-	const args = config.get<string>("args") as string
-	const flag = config.get<string>("flag") as string
-	const inop = config.get<string>("inop") as string
+	const args = <string>config.get("args")
+	const flag = <string>config.get("flag")
+	const inop = <string>config.get("inop")
 	const expr = `
-	const throw_parse_error(file, x) =
-		x.head == :toplevel && for (i, ex) ∈ enumerate(x.args)
-			ex isa Expr && ex.head ∈ (:error, :incomplete) || continue
+	const throw_parse_error(f, p) =
+		p.head == :toplevel && for (i, x) ∈ enumerate(p.args)
+			x isa Expr && x.head ∈ (:error, :incomplete) || continue
+			l = p.args[i-1]
 			@static if VERSION < v"1.10"
-				line, info = x.args[i-1].line, replace(join(ex.args, ", "), '"' => '\`')
+				i = replace(join(x.args, ", "), '"' => '\`')
+				e = "ParseError:\n$l\n" .* x.args
 			else
-				line, info = x.args[i-1].line, ex.args[1].detail.diagnostics[1].message
-				foreach(println, sprint.(showerror, ex.args))
+				i = x.args[1].detail.diagnostics[1].message
+				e = sprint.(showerror, x.args)
 			end
-			throw(Meta.ParseError("$file:$line: $info"))
+			n = l.line
+			println.(e .* "\n")
+			throw(Meta.ParseError("$f:$n: $i"))
 		end
 	const text, path = read(stdin, String), strip(raw""" ${path} """)
 	throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
@@ -85,7 +89,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 	return args_list
 }
 
-// From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L78-L90
+// https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L78-L90
 export async function installFormatter(): Promise<void> {
 	const julia = await getJulia()
 	try {
@@ -96,7 +100,7 @@ export async function installFormatter(): Promise<void> {
 	}
 }
 
-// From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L101-L132
+// https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L101-L132
 export async function alertFormattingError(error: FormatException): Promise<void> {
 	const err = error.message
 	vscodeOutput.appendLine(err)
@@ -123,21 +127,23 @@ export async function alertFormattingError(error: FormatException): Promise<void
 		err.includes("ERROR: Base.Meta.ParseError") ||
 		err.includes("ERROR: ParseError") //
 	) {
+		const button = "Detail"
 		const err_header_match = err.match(/(?:^|\n)(ERROR:.*?)\s*Stacktrace:/s)
 		const err_body = err_header_match !== null ? err_header_match[1] : err
 
-		await vscode.window.showErrorMessage(err_body)
+		const response = await vscode.window.showErrorMessage(err_body, button)
+		if (response === button) vscode.workspace.openTextDocument({ content: error.cause ?? err, language: "plaintext" }).then((doc) => vscode.window.showTextDocument(doc))
 	} else {
-		const bugReportButton = "Submit Bug Report"
+		const button = "Submit Bug Report"
 		const err_header_match = err.match(/^(ERROR:.*)/m)
 		const err_body = err_header_match !== null ? err_header_match[1] : `Unknown Error: Could not format code. Full error:\n\n${err}`
 
-		const response = await vscode.window.showErrorMessage(err_body, bugReportButton)
-		if (response === bugReportButton) vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://github.com/0h7z/vscode-julia-format/issues/new"))
+		const response = await vscode.window.showErrorMessage(err_body, button)
+		if (response === button) vscode.commands.executeCommand("vscode.open", vscode.Uri.parse("https://github.com/0h7z/vscode-julia-format/issues/new"))
 	}
 }
 
-// From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L142-L152
+// https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L142-L152
 export async function format(path: string, content: string): Promise<Hunk[]> {
 	const julia = await getJulia()
 	const args: string[] = await buildFormatArgs(vscode.workspace.asRelativePath(path).replace(/\\/g, "/"))
@@ -145,8 +151,8 @@ export async function format(path: string, content: string): Promise<Hunk[]> {
 	progressBar.show()
 
 	try {
-		const tabSize = vscode.workspace.getConfiguration("julia-format").get<number>("tabs") as number
-		const formatter = cp.spawn(julia, args)
+		const tabSize = <number>vscode.workspace.getConfiguration("julia-format").get("tabs")
+		const formatter = spawn(julia, args)
 		const tabToSpace = (s: string): string => {
 			const r = RegExp("^(\t*)\t(?!⋮$)", "mg")
 			while (r.test(s)) s = s.replace(r, `$1${" ".repeat(tabSize)}`)
@@ -164,15 +170,16 @@ export async function format(path: string, content: string): Promise<Hunk[]> {
 		const formatted = await readableToString(formatter.stdout)
 		const result = tabSize >= 1 ? spaceToTab(formatted) : formatted
 
-		// TODO: capture stderr output from JuliaFormatter on error
-		await onExit(formatter)
+		try {
+			await onExit(formatter)
+		} catch (s) {
+			throw new Error(<string>s, { cause: formatted })
+		}
 
-		// It would be nicer if we could combine these two lines somehow
-		const patch = createPatch(path, content, result)
-		const parsed: ParsedDiff[] = parsePatch(patch)
-		return parsed[0].hunks
-	} catch (e: any) {
-		const err = { message: e.message ?? e } as FormatException
+		const patch = structuredPatch(path, path, content, result)
+		return patch.hunks
+	} catch (e) {
+		const err = <FormatException>e
 		if (!installingJlFmt) alertFormattingError(err)
 		throw err
 	} finally {
@@ -180,7 +187,7 @@ export async function format(path: string, content: string): Promise<Hunk[]> {
 	}
 }
 
-// From https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L159-L180
+// https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L159-L180
 export function hunksToEdits(hunks: Hunk[]): vscode.TextEdit[] {
 	return hunks.map((hunk): vscode.TextEdit => {
 		const startPos = new vscode.Position(hunk.oldStart - 1, 0)
@@ -188,10 +195,10 @@ export function hunksToEdits(hunks: Hunk[]): vscode.TextEdit[] {
 		const editRange = new vscode.Range(startPos, endPos)
 
 		const newTextFragments: string[] = []
-		hunk.lines.forEach((line, i) => {
+		hunk.lines.forEach((line) => {
 			const firstChar = line.charAt(0)
-			// hunk.linedelimiters[i] should always exist, but you never know
-			if (firstChar === " " || firstChar === "+") newTextFragments.push(line.substring(1), hunk.linedelimiters![i] ?? "\n")
+			// https://github.com/kpdecker/jsdiff/pull/393
+			if (firstChar === " " || firstChar === "+") newTextFragments.push(line.substring(1), "\n")
 		})
 		const newText = newTextFragments.join("")
 
@@ -210,8 +217,8 @@ export function activate() {
 	format("", "")
 }
 
-export interface FormatException {
-	message: string
+export interface FormatException extends Error {
+	cause: string
 }
 
 // this method is called when your extension is deactivated

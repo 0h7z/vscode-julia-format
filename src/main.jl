@@ -16,16 +16,20 @@
 using JuliaFormatter
 JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw""" ${for_in_op} """)
 
-const throw_parse_error(file, x) =
-	x.head == :toplevel && for (i, ex) ∈ enumerate(x.args)
-		ex isa Expr && ex.head ∈ (:error, :incomplete) || continue
+const throw_parse_error(f, p) =
+	p.head == :toplevel && for (i, x) ∈ enumerate(p.args)
+		x isa Expr && x.head ∈ (:error, :incomplete) || continue
+		l = p.args[i-1]
 		@static if VERSION < v"1.10"
-			line, info = x.args[i-1].line, replace(join(ex.args, ", "), '"' => '\`')
+			i = replace(join(x.args, ", "), '"' => '\`')
+			e = "ParseError:\n$l\n" .* x.args
 		else
-			line, info = x.args[i-1].line, ex.args[1].detail.diagnostics[1].message
-			foreach(println, sprint.(showerror, ex.args))
+			i = x.args[1].detail.diagnostics[1].message
+			e = sprint.(showerror, x.args)
 		end
-		throw(Meta.ParseError("$file:$line: $info"))
+		n = l.line
+		println.(e .* "\n")
+		throw(Meta.ParseError("$f:$n: $i"))
 	end
 const text, path = read(stdin, String), strip(raw""" ${path} """)
 throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
