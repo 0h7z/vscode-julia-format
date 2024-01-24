@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Heptazhou <zhou@0h7z.com>
+# Copyright (C) 2022-2024 Heptazhou <zhou@0h7z.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -13,12 +13,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-((d, f) -> isfile(f) && isdir(d) ? (rm(f), rm(d, recursive = true)) : error())("out/", "main.js")
+((d, f) -> isdir(d) && isfile(f) ? rm.((d, f), recursive = true) : error())("out/", "main.js")
 
 const pkg = "vscode-julia-format"
 const ext = ".vsix"
-const ps  = "$pkg-" * raw"(\d+\.\d+\.\d+)"
-const pd  = "$pkg-" * raw"v\1"
+const ps  = pkg * raw"-(\d+\.\d+\.\d+)"
+const pd  = pkg * raw"-v\1"
 const src = Regex('^' * ps * escape_string(ext, '.') * '$')
 const dst = SubstitutionString(pd * ext)
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Heptazhou <zhou@0h7z.com>
+# Copyright (C) 2022-2024 Heptazhou <zhou@0h7z.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -13,10 +13,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-((d, f) -> write(f, replace(read(d * f, String), r"^\t+"m => "")))("out/", "main.js")
+((d, f) -> write(f, replace(read(d * f, String), r"^\t+ *"m => "")))("out/", "main.js")
 
 const dir = "node_modules/"
-const mod = ["@rauschma/stringio", "diff", "untildify", "util"]
+const mod = ["@rauschma/stringio", "diff", "untildify"]
 const rex = r"\.(d\.ts|es6\.js|map|md)$|^(runtime\.js|tsconfig\.json)$"
 
 for (prefix, ds, fs) ∈ walkdir(dir, topdown = false)

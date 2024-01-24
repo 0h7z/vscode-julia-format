@@ -55,15 +55,20 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 	const inop = config.get<string>("inop") as string
 	const expr = `
 	const throw_parse_error(file, x) =
-	x.head == :toplevel && for (i, ex) ∈ pairs(x.args)
-	ex isa Expr && ex.head ∈ (:error, :incomplete) || continue
-	line, info = x.args[i-1].line, replace(join(ex.args, ", "), '"' => '\`')
-	throw(Meta.ParseError("$file:$line: $info"))
-	end
-	const text = read(stdin, String)
-	const path = strip(raw" ${path} ")
+		x.head == :toplevel && for (i, ex) ∈ enumerate(x.args)
+			ex isa Expr && ex.head ∈ (:error, :incomplete) || continue
+			@static if VERSION < v"1.10"
+				line, info = x.args[i-1].line, replace(join(ex.args, ", "), '"' => '\`')
+			else
+				line, info = x.args[i-1].line, ex.args[1].detail.diagnostics[1].message
+				foreach(println, sprint.(showerror, ex.args))
+			end
+			throw(Meta.ParseError("$file:$line: $info"))
+		end
+	const text, path = read(stdin, String), strip(raw""" ${path} """)
 	throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
-	print(format_text(text; ${flag}))\n`
+	print(format_text(text; ${flag}))
+	` // main.jl
 
 	const for_in_op = inop.trim().replace(/ +/g, " ")
 	const args_list = [
@@ -71,7 +76,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 		"-e",
 		`using JuliaFormatter` +
 		( for_in_op === "" ? "" : "\n" +
-		`JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw"${for_in_op}", ' ')` )
+		`JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw""" ${for_in_op} """)` )
 		+ expr, // prettier-ignore
 	]
 
@@ -114,6 +119,14 @@ export async function alertFormattingError(error: FormatException): Promise<void
 			installingJlFmt = false
 			progress.dispose()
 		}
+	} else if (
+		err.includes("ERROR: Base.Meta.ParseError") ||
+		err.includes("ERROR: ParseError") //
+	) {
+		const err_header_match = err.match(/(?:^|\n)(ERROR:.*?)\s*Stacktrace:/s)
+		const err_body = err_header_match !== null ? err_header_match[1] : err
+
+		await vscode.window.showErrorMessage(err_body)
 	} else {
 		const bugReportButton = "Submit Bug Report"
 		const err_header_match = err.match(/^(ERROR:.*)/m)
@@ -158,8 +171,8 @@ export async function format(path: string, content: string): Promise<Hunk[]> {
 		const patch = createPatch(path, content, result)
 		const parsed: ParsedDiff[] = parsePatch(patch)
 		return parsed[0].hunks
-	} catch (e) {
-		const err = <FormatException>e
+	} catch (e: any) {
+		const err = { message: e.message ?? e } as FormatException
 		if (!installingJlFmt) alertFormattingError(err)
 		throw err
 	} finally {

@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Heptazhou <zhou@0h7z.com>
+# Copyright (C) 2022-2024 Heptazhou <zhou@0h7z.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -14,16 +14,20 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using JuliaFormatter
-JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw"${for_in_op}", ' ')
+JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw""" ${for_in_op} """)
 
 const throw_parse_error(file, x) =
-	x.head == :toplevel && for (i, ex) ∈ pairs(x.args)
+	x.head == :toplevel && for (i, ex) ∈ enumerate(x.args)
 		ex isa Expr && ex.head ∈ (:error, :incomplete) || continue
-		line, info = x.args[i-1].line, replace(join(ex.args, ", "), '"' => '\`')
+		@static if VERSION < v"1.10"
+			line, info = x.args[i-1].line, replace(join(ex.args, ", "), '"' => '\`')
+		else
+			line, info = x.args[i-1].line, ex.args[1].detail.diagnostics[1].message
+			foreach(println, sprint.(showerror, ex.args))
+		end
 		throw(Meta.ParseError("$file:$line: $info"))
 	end
-const text = read(stdin, String)
-const path = strip(raw" ${path} ")
+const text, path = read(stdin, String), strip(raw""" ${path} """)
 throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
 print(format_text(text; ${flag}))
 

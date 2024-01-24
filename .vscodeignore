@@ -11,7 +11,5 @@ src
 tsconfig.json
 
 !node_modules/@rauschma/stringio
-# !node_modules/child_process
 !node_modules/diff
 !node_modules/untildify
-!node_modules/util

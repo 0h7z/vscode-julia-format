@@ -6,18 +6,18 @@ export async function onExit(cp: ChildProcess) {
 		cp.once("exit", async (code, _) => {
 			if (code === 0) resolve(undefined)
 			else if (cp.stderr !== null) {
-				const errorOutput = await readableToString(cp.stderr)
-				reject(new Error(`Exit with error code: ${code}\n` + errorOutput))
+				const stderr = await readableToString(cp.stderr)
+				reject(`Returned: exit code ${code}\n` + stderr)
 			} else {
-				reject(new Error(`Exit with error code: ${code}`))
+				reject(`Returned: exit code ${code}`)
 			}
 		})
 		cp.once("error", async (err) => {
 			if (cp.stderr !== null) {
-				const errorOutput = await readableToString(cp.stderr)
-				reject(`${err.name}: ${err.message}\n` + errorOutput)
+				const stderr = await readableToString(cp.stderr)
+				reject(`${err.name}: ${err.message}\n` + stderr)
 			} else {
-				reject(err)
+				reject(`${err}`)
 			}
 		})
 	})
