@@ -15,15 +15,3 @@
 
 ((d, f) -> write(f, replace(read(d * f, String), r"^\t+ *"m => "")))("out/", "main.js")
 
-const dir = "node_modules/"
-const mod = ["@rauschma/stringio", "diff", "untildify"]
-const rex = r"\.(d\.ts|es6\.js|map|md)$|^(runtime\.js|tsconfig\.json)$"
-
-for (prefix, ds, fs) ∈ walkdir(dir, topdown = false)
-	(prefix) = replace(prefix, "\\" => "/")
-	any(startswith.(prefix, dir .* mod)) && cd(prefix) do
-		rm.(("test",), force = true, recursive = true)
-		rm.(filter!(contains(rex), fs))
-	end
-end
-

@@ -3,7 +3,7 @@
 	"displayName": "Julia Formatter",
 	"publisher": "0h7z",
 	"icon": "icon.ico",
-	"version": "1.3.2",
+	"version": "1.3.3",
 	"license": "AGPL-3.0-or-later",
 	"description": "A formatter for the Julia language",
 	"repository": {
@@ -55,12 +55,11 @@
 		}
 	},
 	"scripts": {
-		"npm": "npm i && npm ci && npm up",
-		"all": "npm ci && pnpm compile && pnpm build && pnpm package && npm ci",
-		"upd": "pnpm up --latest && pnpm add -D @types/vscode@1.69 && pnpm npm",
+		"all": "pnpm compile && pnpm build && pnpm package",
+		"upd": "pnpm up --latest && pnpm add -D @types/vscode@1.69",
 		"build": "pnpm esbuild --minify",
 		"compile": "tsc -p .",
-		"package": "julia pre-package.jl && vsce package && julia post-package.jl",
+		"package": "julia pre-package.jl && vsce package --no-dependencies && julia post-package.jl",
 		"esbuild": "esbuild src/main.ts --bundle --outdir=out --external:vscode --platform=node --charset=utf8"
 	},
 	"dependencies": {

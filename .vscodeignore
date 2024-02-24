@@ -1,4 +1,5 @@
 
+!.editorconfig
 .gitignore
 .vscode
 **/*.jl
@@ -9,7 +10,3 @@ out
 pnpm-lock.yaml
 src
 tsconfig.json
-
-!node_modules/@rauschma/stringio
-!node_modules/diff
-!node_modules/untildify
