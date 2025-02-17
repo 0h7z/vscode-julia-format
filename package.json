@@ -3,7 +3,7 @@
 	"displayName": "Julia Formatter",
 	"publisher": "0h7z",
 	"icon": "icon.ico",
-	"version": "1.3.5",
+	"version": "1.3.6",
 	"license": "AGPL-3.0-only",
 	"description": "A formatter for the Julia language",
 	"repository": {
@@ -32,7 +32,7 @@
 			"properties": {
 				"julia-format.args": {
 					"type": "string",
-					"default": "--threads=auto --startup-file=no --compile=min",
+					"default": "--startup-file=no --project=@vscode-julia-format --compile=min -t auto",
 					"markdownDescription": "Command line argument(s) for Julia. See [Command-line switches for Julia](https://docs.julialang.org/en/v1/manual/command-line-interface/#command-line-interface)."
 				},
 				"julia-format.flag": {
@@ -70,15 +70,15 @@
 		"untildify": "^5.0.0"
 	},
 	"devDependencies": {
-		"@types/diff": "^5.2.3",
-		"@types/node": "^22.7.5",
+		"@types/diff": "^7.0.1",
+		"@types/node": "^22.13.4",
 		"@types/vscode": "~1.69.1",
-		"esbuild": "^0.24.0",
-		"typescript": "^5.6.3"
+		"esbuild": "^0.25.0",
+		"typescript": "^5.7.3"
 	},
 	"engines": {
-		"node": ">=20.0.0",
-		"pnpm": ">=9.0.0",
+		"node": ">=22.0.0",
+		"pnpm": ">=10.0.0",
 		"vscode": "^1.69.0"
 	},
 	"pnpm": {

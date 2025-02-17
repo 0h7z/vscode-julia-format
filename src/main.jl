@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024 Heptazhou <zhou@0h7z.com>
+# Copyright (C) 2022-2025 Heptazhou <zhou@0h7z.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -15,7 +15,7 @@
 using JuliaFormatter
 JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw""" ${for_in_op} """)
 
-const throw_parse_error(f, p) =
+const parse_error(f, p) =
 	p.head == :toplevel && for (i, x) ∈ enumerate(p.args)
 		x isa Expr && x.head ∈ (:error, :incomplete) || continue
 		l = p.args[i-1]
@@ -31,6 +31,6 @@ const throw_parse_error(f, p) =
 		throw(Meta.ParseError("$f:$n: $i"))
 	end
 const text, path = read(stdin, String), strip(raw""" ${path} """)
-throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
+parse_error(path, Meta.parseall(text, filename = basename(path)))
 print(format_text(text; ${flag}))
 

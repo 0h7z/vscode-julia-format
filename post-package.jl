@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024 Heptazhou <zhou@0h7z.com>
+# Copyright (C) 2022-2025 Heptazhou <zhou@0h7z.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -12,17 +12,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using Exts
+
 ((d, f) -> isdir(d) && isfile(f) ? rm.((d, f), recursive = true) : error())("out/", "main.js")
 
-const pkg = "vscode-julia-format"
-const ext = ".vsix"
-const ps  = pkg * raw"-(\d+\.\d+\.\d+)"
-const pd  = pkg * raw"-v\1"
-const src = Regex('^' * ps * escape_string(ext, '.') * '$')
-const dst = SubstitutionString(pd * ext)
-
-for f ∈ filter!(endswith(ext), readdir())
-	g = replace(f, src => dst)
+for f ∈ filter!(endswith(".vsix"), readdir())
+	g = replace(f, r"-(\d+\.\d+\.\d+\.vsix)$" => s"-v\1")
 	g ≠ f && mv(f, g, force = true)
 end
 

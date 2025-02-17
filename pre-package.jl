@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024 Heptazhou <zhou@0h7z.com>
+# Copyright (C) 2022-2025 Heptazhou <zhou@0h7z.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -12,5 +12,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-((d, f) -> write(f, replace(read(d * f, String), r"^\t+ *"m => "")))("out/", "main.js")
+using Exts
+
+((d, f) -> write(f, replace(readstr(d * f), r"^\t+ *"m => "")))("out/", "main.js")
 

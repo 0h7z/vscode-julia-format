@@ -54,7 +54,7 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 	const flag = <string>config.get("flag")
 	const inop = <string>config.get("inop")
 	const expr = `
-	const throw_parse_error(f, p) =
+	const parse_error(f, p) =
 		p.head == :toplevel && for (i, x) ∈ enumerate(p.args)
 			x isa Expr && x.head ∈ (:error, :incomplete) || continue
 			l = p.args[i-1]
@@ -70,14 +70,14 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 			throw(Meta.ParseError("$f:$n: $i"))
 		end
 	const text, path = read(stdin, String), strip(raw""" ${path} """)
-	throw_parse_error(path, Meta.parseall(text, filename = basename(path)))
+	parse_error(path, Meta.parseall(text, filename = basename(path)))
 	print(format_text(text; ${flag}))
 	` // main.jl
 
-	const for_in_op = inop.trim().replace(/ +/g, " ")
+	const for_in_op = inop.trim().replace(/ {2,}/g, " ")
 	const args_list = [
 		...args.split(/(?<!\\) /).filter((s) => s !== ""),
-		"-e",
+		`-e`,
 		`using JuliaFormatter` +
 		( for_in_op === "" ? "" : "\n" +
 		`JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw""" ${for_in_op} """)` )
@@ -92,8 +92,10 @@ export async function buildFormatArgs(path: string): Promise<string[]> {
 // https://github.com/iansan5653/vscode-format-python-docstrings/blob/0135de8/src/extension.ts#L78-L90
 export async function installFormatter(): Promise<void> {
 	const julia = await getJulia()
+	const config = vscode.workspace.getConfiguration("julia-format")
+	const args = <string>config.get("args")
 	try {
-		await promiseExec(`${julia} -e "using Pkg; Pkg.Registry.update(); Pkg.add(\\"JuliaFormatter\\"); Pkg.update(\\"JuliaFormatter\\")"`)
+		await promiseExec(`${julia} ${args.trim().replace(/ {2,}/g, " ")} -e "using Pkg; Pkg.Registry.update(); Pkg.add(\\"JuliaFormatter\\"); Pkg.update(\\"JuliaFormatter\\")"`)
 	} catch (err) {
 		vscode.window.showErrorMessage(`Could not install JuliaFormatter automatically. Try manually installing with \` julia -e "using Pkg; Pkg.update(); Pkg.add(string(:JuliaFormatter))" \`.\n\nFull error: ${err}.`)
 		throw err
