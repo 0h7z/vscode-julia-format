@@ -1,13 +1,38 @@
+// https://www.typescriptlang.org/tsconfig/
 {
 	"compilerOptions": {
-		"module": "NodeNext",
-		"target": "ESNext",
-		"outDir": "out",
-		"rootDir": "src",
-		"strict": true,
+		//* Type Checking
+		"exactOptionalPropertyTypes": false,
 		"noFallthroughCasesInSwitch": true,
+		"noImplicitOverride": true,
 		"noImplicitReturns": true,
-		"noUnusedParameters": true
+		"noPropertyAccessFromIndexSignature": true,
+		"noUncheckedIndexedAccess": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"strict": true,
+		//* Modules
+		"module": "NodeNext", // NodeNext | Preserve
+		// "paths": {},
+		"resolveJsonModule": true,
+		"rewriteRelativeImportExtensions": true, // Node.js //! TS2876
+		// "rootDir": "src",
+		// "types": ["node"],
+		//* Emit
+		"noEmit": true,
+		"outDir": "out",
+		"removeComments": true,
+		//* JavaScript Support
+		"checkJs": true,
+		//* Interop Constraints
+		"erasableSyntaxOnly": true, // Node.js
+		"preserveSymlinks": true,
+		"verbatimModuleSyntax": true, // Node.js
+		//* Language and Environment
+		"target": "ESNext", // ESNext
+		//* Completeness
+		"skipLibCheck": true
 	},
+	"include": ["src/**/*"],
 	"exclude": ["node_modules"]
 }

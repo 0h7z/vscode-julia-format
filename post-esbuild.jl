@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2025 Heptazhou <zhou@0h7z.com>
+# Copyright (C) 2022-2026 Heptazhou <zhou@0h7z.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -14,5 +14,7 @@
 
 using Exts
 
-((d, f) -> write(f, replace(readstr(d * f), r"^\t+ *"m => "")))("out/", "main.js")
+const ps = [r"\n\t+`" => "`", r"[?:&|=]\K\n\t+" => " ", r"\n\t{2,}" => "; ", r"^\t"m => ""]
+
+((d, f) -> write(f, replace(readstr(d * f), ps...)))("out/", "main.cjs")
 

@@ -1,30 +1,63 @@
 {
 	"name": "vscode-julia-format",
-	"displayName": "Julia Formatter",
-	"publisher": "0h7z",
-	"icon": "icon.ico",
-	"version": "1.3.6",
+	"type": "module",
+	"version": "1.3.7",
 	"license": "AGPL-3.0-only",
+	"private": true,
+	"scripts": {
+		"all": "pnpm check && pnpm build && pnpm package",
+		"rst": "pnpm up -f",
+		"upd": "pnpm up --latest && pnpm dedupe && pnpm up -s",
+		"build": "pnpm esbuild --minify",
+		"check": "tsc",
+		"esbuild": "esbuild src/main.ts --bundle --outfile=out/main.cjs --external:vscode --platform=node --charset=utf8",
+		"package": "pnpm dlx @vscode/vsce package --no-dependencies || true",
+		"postesbuild": "julia post-esbuild.jl",
+		"postpackage": "julia post-package.jl"
+	},
+	"dependencies": {
+		"@rauschma/stringio": "^1.4.0",
+		"diff": "^5.2.2",
+		"untildify": "^6.0.0"
+	},
+	"devDependencies": {
+		"@pnpm/types": "latest-10",
+		"@types/diff": "^7.0.2",
+		"@types/node": "^26.6.11",
+		"@types/vscode": "~1.69.1",
+		"esbuild": "^0.28.2",
+		"typescript": "^7.0.2"
+	},
+	"engines": {
+		"node": ">=24.0.0",
+		"pnpm": ">=10.0.0 <11",
+		"vscode": "^1.69.0"
+	},
+	"pnpm": {
+		"ignoredBuiltDependencies": [
+			"esbuild"
+		],
+		"overrides": {
+			"@types/diff": "^7",
+			"@types/vscode": "~1.69",
+			"diff": "^5"
+		}
+	},
+	"activationEvents": [
+		"onLanguage:julia"
+	],
+	"categories": [
+		"Formatters"
+	],
 	"description": "A formatter for the Julia language",
+	"displayName": "Julia Formatter",
+	"icon": "icon.ico",
+	"main": "./main.cjs",
+	"publisher": "0h7z",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/0h7z/vscode-julia-format"
 	},
-	"issues": {
-		"url": "https://github.com/0h7z/vscode-julia-format/issues"
-	},
-	"categories": [
-		"Formatters"
-	],
-	"activationEvents": [
-		"onLanguage:julia"
-	],
-	"keywords": [
-		"julia",
-		"format",
-		"style"
-	],
-	"main": "./main.js",
 	"contributes": {
 		"configuration": {
 			"type": "object",
@@ -38,12 +71,12 @@
 				"julia-format.flag": {
 					"type": "string",
 					"default": "style=DefaultStyle(), indent=4, margin=256, always_for_in=true, for_in_replacement=\"∈\", whitespace_typedefs=true, import_to_using=true, whitespace_in_kwargs=true, align_struct_field=true, align_assignment=true, align_conditional=true, align_pair_arrow=true, normalize_line_endings=\"unix\", align_matrix=true, join_lines_based_on_source=true, indent_submodule=true, surround_whereop_typeparameters=false, yas_style_nesting=true",
-					"markdownDescription": "Flag(s) for `JuliaFormatter`. See [Formatting Options](https://domluna.github.io/JuliaFormatter.jl/stable/#Formatting-Options) and [options.jl](https://github.com/domluna/JuliaFormatter.jl/blob/master/src/options.jl)."
+					"markdownDescription": "Flag(s) for `JuliaFormatter`. See [Formatting Options](https://juliaeditorsupport.github.io/JuliaFormatter.jl/stable/formatting_options/) and [options.jl](https://github.com/domluna/JuliaFormatter.jl/blob/master/src/options.jl)."
 				},
 				"julia-format.inop": {
 					"type": "string",
 					"default": "= ∈",
-					"markdownDescription": "The `in`-like operator(s) for doing `for_in_replacement`, seperated by space. Or, set this to empty string to use the default rule of `JuliaFormatter`."
+					"markdownDescription": "The `in`-like operator(s) for doing `for_in_replacement`, seperated by space. Or, set this to empty string to use the default rule of `JuliaFormatter`. Note: This no longer works with [JuliaFormatter v2.9.0+](https://github.com/JuliaEditorSupport/JuliaFormatter.jl/commit/1f1f388f794add3495a308b5dbd2e3ae116db043#diff-c0cc23b54ebc2c42a6eeaa572df5204a030c72c9f1ee47073f2de1a00404c808L933-L934), and you have to set `always_for_in = nothing` instead."
 				},
 				"julia-format.tabs": {
 					"type": "number",
@@ -52,51 +85,6 @@
 					"markdownDescription": "Tab size, which should be the same as `indent`'s value in `#julia-format.flag#`. Or, set this to 0 to use space(s)."
 				}
 			}
-		}
-	},
-	"scripts": {
-		"all": "pnpm compile && pnpm build && pnpm package",
-		"upd": "pnpm up --latest && pnpm add -D @types/vscode@1.69 && pnpm add diff@5",
-		"build": "pnpm esbuild --minify",
-		"compile": "tsc -p .",
-		"esbuild": "esbuild src/main.ts --bundle --outdir=out --external:vscode --platform=node --charset=utf8",
-		"package": "pnpm dlx vsce package --no-dependencies",
-		"prepackage": "julia pre-package.jl",
-		"postpackage": "julia post-package.jl"
-	},
-	"dependencies": {
-		"@rauschma/stringio": "^1.4.0",
-		"diff": "^5.2.0",
-		"untildify": "^5.0.0"
-	},
-	"devDependencies": {
-		"@types/diff": "^7.0.1",
-		"@types/node": "^22.13.4",
-		"@types/vscode": "~1.69.1",
-		"esbuild": "^0.25.0",
-		"typescript": "^5.7.3"
-	},
-	"engines": {
-		"node": ">=22.0.0",
-		"pnpm": ">=10.0.0",
-		"vscode": "^1.69.0"
-	},
-	"pnpm": {
-		"ignoredOptionalDependencies": [
-			"*android*",
-			"*arm*",
-			"*bsd*",
-			"*ia32*",
-			"*loong64*",
-			"*mips64*",
-			"*musl*",
-			"*pc64*",
-			"*riscv64*",
-			"*s390x*",
-			"*sunos*"
-		],
-		"overrides": {
-			"esbuild": "*"
 		}
 	}
 }

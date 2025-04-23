@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2025 Heptazhou <zhou@0h7z.com>
+# Copyright (C) 2022-2026 Heptazhou <zhou@0h7z.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -13,7 +13,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using JuliaFormatter
-JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw""" ${for_in_op} """)
+@static isdefined(JuliaFormatter, :valid_for_in_op) &&
+		(JuliaFormatter.valid_for_in_op(s::String) = s ∈ split(raw""" ${for_in_op} """))
 
 const parse_error(f, p) =
 	p.head == :toplevel && for (i, x) ∈ enumerate(p.args)
@@ -21,13 +22,13 @@ const parse_error(f, p) =
 		l = p.args[i-1]
 		@static if VERSION < v"1.10"
 			i = replace(join(x.args, ", "), '"' => '\`')
-			e = "ParseError:\n$l\n" .* x.args
+			e = "ParseError:\\xa$l\\xa" .* x.args
 		else
 			i = x.args[1].detail.diagnostics[1].message
 			e = sprint.(showerror, x.args)
 		end
 		n = l.line
-		println.(e .* "\n")
+		println.(e .* "\\xa")
 		throw(Meta.ParseError("$f:$n: $i"))
 	end
 const text, path = read(stdin, String), strip(raw""" ${path} """)
